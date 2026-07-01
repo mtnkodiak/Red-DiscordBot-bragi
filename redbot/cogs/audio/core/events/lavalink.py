@@ -285,52 +285,44 @@ class LavalinkEvents(MixinMeta, metaclass=CompositeMetaClass):
                 )
                 self._ll_guild_updates.discard(guild_id)
                 self.bot.dispatch("red_audio_audio_disconnect", guild)
-            if message_channel:
+            # Track errors are logged but not sent to Discord channel
+            if message_channel and early_exit:
                 message_channel = guild.get_channel_or_thread(message_channel)
-                if early_exit:
-                    log.warning(
-                        "Audio detected multiple continuous errors during playback "
-                        "- terminating the player for guild: %s.",
-                        guild_id,
-                    )
-                    log.verbose(
-                        "Player has been terminated due to multiple playback failures: %r", player
-                    )
-                    embed = discord.Embed(
-                        colour=await self.bot.get_embed_color(message_channel),
-                        title=_("Multiple Errors Detected"),
-                        description=_(
-                            "Closing the audio player "
-                            "due to multiple errors being detected. "
-                            "If this persists, please inform the bot owner "
-                            "as the Audio cog may be temporally unavailable."
-                        ),
-                    )
-                    await message_channel.send(embed=embed)
-                    return
-                else:
-                    description = description or ""
-                    if event_type == lavalink.LavalinkEvents.TRACK_STUCK:
-                        embed = discord.Embed(
-                            colour=await self.bot.get_embed_color(message_channel),
-                            title=_("Track Stuck"),
-                            description=_(
-                                "Playback of the song has stopped due to an unexpected error.\n{error}"
-                            ).format(error=description),
-                        )
-                    else:
-                        embed = discord.Embed(
-                            title=_("Track Error"),
-                            colour=await self.bot.get_embed_color(message_channel),
-                            description="{}\n{}".format(
-                                extra["message"].replace("\n", ""), description
-                            ),
-                        )
-                        if current_id:
-                            asyncio.create_task(
-                                self.api_interface.global_cache_api.report_invalid(current_id)
-                            )
-                    await message_channel.send(embed=embed)
+                log.warning(
+                    "Audio detected multiple continuous errors during playback "
+                    "- terminating the player for guild: %s.",
+                    guild_id,
+                )
+                log.verbose(
+                    "Player has been terminated due to multiple playback failures: %r", player
+                )
+                embed = discord.Embed(
+                    colour=await self.bot.get_embed_color(message_channel),
+                    title=_("Multiple Errors Detected"),
+                    description=_(
+                        "Closing the audio player "
+                        "due to multiple errors being detected. "
+                        "If this persists, please inform the bot owner "
+                        "as the Audio cog may be temporally unavailable."
+                    ),
+                )
+                await message_channel.send(embed=embed)
+                return
+            elif early_exit:
+                log.warning(
+                    "Audio detected multiple continuous errors during playback "
+                    "- terminating the player for guild: %s.",
+                    guild_id,
+                )
+                log.verbose(
+                    "Player has been terminated due to multiple playback failures: %r", player
+                )
+                return
+            # Individual track errors are skipped silently - no message sent to channel
+            if current_id:
+                asyncio.create_task(
+                    self.api_interface.global_cache_api.report_invalid(current_id)
+                )
             if player.node.ready:
                 await player.skip()
 
