@@ -94,6 +94,14 @@ DEFAULT_LAVALINK_YAML = {
     "yaml__plugins__youtube__clientOptions__WEBEMBEDDED__playlistLoading": False,
     "yaml__plugins__youtube__clientOptions__WEBEMBEDDED__searching": False,
     "yaml__plugins__youtube__clientOptions__WEBEMBEDDED__videoLoading": True,
+    # OAuth2 configuration for YouTube plugin
+    # NOTE: To enable OAuth, set refreshToken after first OAuth flow
+    # See LAVALINK_UPGRADE_TODO.md for setup instructions
+    "yaml__plugins__youtube__oauth__enabled": True,
+    "yaml__plugins__youtube__oauth__refreshToken": "",  # Add your refresh token here
+    "yaml__plugins__youtube__oauth__skipInitialization": False,
+    # Logging for OAuth2 handler
+    "yaml__logging__level__dev_lavalink_youtube_http_YoutubeOauth2Handler": "INFO",
 }
 
 
